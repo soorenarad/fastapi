@@ -1,53 +1,68 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
+import logging
 from contextlib import asynccontextmanager
 
-from api.routers.products import router as products_router
-from api.routers.users import router as users_router
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from api.router import api_router
+from core.config import settings
 from core.db import engine
 from core.models import Base
 
+logger = logging.getLogger(__name__)
 
-async def create_tables():
+
+async def create_tables() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
-    # Startup
     await create_tables()
-
     yield
-
-    # Shutdown
     await engine.dispose()
 
-app = FastAPI(lifespan=lifespan)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.app_name,
+        debug=settings.debug,
+        lifespan=lifespan,
+    )
 
-@app.middleware("http")
-async def my_middleware(request: Request, call_next):
-    print('received request')
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-    response = await call_next(request)
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        logger.info("Received %s %s", request.method, request.url.path)
 
-    print("Response sent")
+        try:
+            response = await call_next(request)
+        except Exception:
+            logger.exception(
+                "Unhandled exception while processing %s %s",
+                request.method,
+                request.url.path,
+            )
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Internal Server Error"},
+            )
+        finally:
+            logger.info("Finished processing request")
 
-    return response
+        return response
+
+    app.include_router(api_router)
+    return app
 
 
-app.include_router(products_router)
-app.include_router(users_router)
-
+app = create_app()
