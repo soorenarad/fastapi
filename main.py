@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -66,3 +66,19 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+@app.websocket("/ws")
+async def websocket_endpoint(
+    websocket: WebSocket
+):
+
+    await websocket.accept()
+
+    while True:
+
+        data = await websocket.receive_text()
+
+        await websocket.send_text(
+            f"You sent: {data}"
+        )
+

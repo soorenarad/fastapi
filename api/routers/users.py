@@ -11,7 +11,7 @@ from api.schemas import (
     UserResponseLogin,
     UserUpdateName,
 )
-from core.crud import get_all_users_crud, get_user_by_email_crud, update_name_crud
+from core.crud import get_all_users_crud, get_user_by_email_crud, update_name_crud, get_user_by_id_crud
 
 router = APIRouter(prefix="/users", tags=["users"])
 

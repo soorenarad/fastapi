@@ -1,17 +1,17 @@
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.dependencies.auth import create_access_token, hash_password, verify_password
 from api.schemas import UserCreate
+from api.deps import DbSession
 from core.crud import create_user_crud, get_user_by_id_crud
-from core.db import get_db
 from core.models import User
 
 
 async def get_existing_user(
     user_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: DbSession,
 ) -> User:
     user = await get_user_by_id_crud(db, user_id)
 
