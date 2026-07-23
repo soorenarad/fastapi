@@ -23,9 +23,10 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 
 sync_url = settings.database_url.replace(
-    "sqlite+aiosqlite",
-    "sqlite"
+    "postgresql+asyncpg",
+    "postgresql+psycopg"
 )
+
 config.set_main_option("sqlalchemy.url", sync_url)
 
 target_metadata = Base.metadata

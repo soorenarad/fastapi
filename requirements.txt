@@ -4,8 +4,9 @@ pydantic
 pydantic-settings
 sqlalchemy
 alembic
-aiosqlite
 bcrypt==4.0.1
 passlib
 python-jose[cryptography]
 python-multipart
+psycopg
+asyncpg

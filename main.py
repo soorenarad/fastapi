@@ -1,5 +1,4 @@
 import logging
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,29 +6,15 @@ from fastapi.responses import JSONResponse
 
 from api.router import api_router
 from core.config import settings
-from core.db import engine
-from core.models import Base
+
 
 logger = logging.getLogger(__name__)
-
-
-async def create_tables() -> None:
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await create_tables()
-    yield
-    await engine.dispose()
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         debug=settings.debug,
-        lifespan=lifespan,
     )
 
     app.add_middleware(
